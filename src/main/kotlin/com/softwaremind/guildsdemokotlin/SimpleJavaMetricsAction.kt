@@ -8,18 +8,8 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.psi.JavaRecursiveElementWalkingVisitor
-import com.intellij.psi.PsiCatchSection
-import com.intellij.psi.PsiConditionalExpression
-import com.intellij.psi.PsiDoWhileStatement
-import com.intellij.psi.PsiForStatement
-import com.intellij.psi.PsiForeachStatement
-import com.intellij.psi.PsiIfStatement
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiSwitchLabelStatement
-import com.intellij.psi.PsiSwitchLabeledRuleStatement
-import com.intellij.psi.PsiWhileStatement
 import com.softwaremind.guildsdemokotlin.service.ComplexityService
 
 class SimpleJavaMetricsAction : AnAction() {
