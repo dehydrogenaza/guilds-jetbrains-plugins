@@ -11,9 +11,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
 import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.messages.MessageBusConnection
+import com.intellij.util.ui.JBUI
 import com.softwaremind.guildsdemokotlin.service.JavaMetricsService
+import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JLabel
 
@@ -61,17 +64,31 @@ class SimpleJavaMetricsPanel(
             }
 
             statsGroup = group("Stats") {
-                row("Average") {
+                row {
+                    label("Average")
+                        .bold()
+                        .applyToComponent {
+                            preferredSize = Dimension(100, preferredSize.height)
+                        }
+
                     avgLineCountLabel = label("").component
                     avgCodeLineCountLabel = label("").component
                     avgComplexityLabel = label("").component
                 }
-                row("Max") {
+                row {
+                    label("Max")
+                        .bold()
+                        .applyToComponent {
+                            preferredSize = Dimension(100, preferredSize.height)
+                        }
+
                     maxLineCountLabel = label("").component
                     maxCodeLineCountLabel = label("").component
                     maxComplexityLabel = label("").component
                 }
             }
+        }.apply {
+            border = JBUI.Borders.empty(12)
         }
 
     private fun updateMetrics() {
