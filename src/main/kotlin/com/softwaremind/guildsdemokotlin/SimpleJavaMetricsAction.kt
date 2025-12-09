@@ -5,6 +5,8 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor
 import com.intellij.psi.PsiCatchSection
@@ -18,6 +20,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiSwitchLabelStatement
 import com.intellij.psi.PsiSwitchLabeledRuleStatement
 import com.intellij.psi.PsiWhileStatement
+import com.softwaremind.guildsdemokotlin.service.ComplexityService
 
 class SimpleJavaMetricsAction : AnAction() {
     // controls when the action is enabled and/or visible
@@ -44,7 +47,7 @@ class SimpleJavaMetricsAction : AnAction() {
         val project = event.project ?: return
         val psiFile = event.getData(CommonDataKeys.PSI_FILE) as? PsiJavaFile ?: return
 
-        val message = buildMessage(psiFile)
+        val message = buildMessage(psiFile, project)
 
         Messages.showInfoMessage(project, message, "Java Metrics for ${psiFile.name}")
     }
@@ -53,9 +56,9 @@ class SimpleJavaMetricsAction : AnAction() {
     // -- Metrics calculation logic --
 
 
-    private fun buildMessage(psi: PsiJavaFile): String {
+    private fun buildMessage(psi: PsiJavaFile, project: Project): String {
         val classes = psi.classes
-        val methodsByClass = classes.associateWith { clazz -> clazz.methods.map { buildMethodReport(it) } }
+        val methodsByClass = classes.associateWith { clazz -> clazz.methods.map { buildMethodReport(it, project) } }
 
         return buildString {
             classes.forEach { clazz ->
@@ -72,11 +75,13 @@ class SimpleJavaMetricsAction : AnAction() {
         }
     }
 
-    private fun buildMethodReport(method: PsiMethod): String {
+    private fun buildMethodReport(method: PsiMethod, project: Project): String {
+        val complexityService = project.service<ComplexityService>()
+
         val methodName = method.nameIdentifier?.text
         val lineCount = method.text.lines().size
         val codeLineCount = method.text.lines().filter { it.isNotBlank() && !it.trim().startsWith("//") }.size
-        val complexity = calculateSimCyclomaticComplexity(method)
+        val complexity = complexityService.calculateSimCyclomaticComplexity(method)
         val isDeprecated = if (method.isDeprecated) "YES" else "NO"
 
         return buildString {
@@ -86,61 +91,5 @@ class SimpleJavaMetricsAction : AnAction() {
             appendLine("    - Deprecated: $isDeprecated")
             appendLine("    - Cyclomatic Complexity: $complexity")
         }
-    }
-
-    private fun calculateSimCyclomaticComplexity(method: PsiMethod): Int {
-        var complexity = 1
-
-        method.accept(object : JavaRecursiveElementWalkingVisitor() {
-            override fun visitIfStatement(statement: PsiIfStatement) {
-                complexity++
-                super.visitIfStatement(statement)
-            }
-
-            override fun visitForStatement(statement: PsiForStatement) {
-                complexity++
-                super.visitForStatement(statement)
-            }
-
-            override fun visitForeachStatement(statement: PsiForeachStatement) {
-                complexity++
-                super.visitForeachStatement(statement)
-            }
-
-            override fun visitWhileStatement(statement: PsiWhileStatement) {
-                complexity++
-                super.visitWhileStatement(statement)
-            }
-
-            override fun visitDoWhileStatement(statement: PsiDoWhileStatement) {
-                complexity++
-                super.visitDoWhileStatement(statement)
-            }
-
-            override fun visitSwitchLabelStatement(statement: PsiSwitchLabelStatement) {
-                // class switch / case syntax
-                complexity++
-                super.visitSwitchLabelStatement(statement)
-            }
-
-            override fun visitSwitchLabeledRuleStatement(statement: PsiSwitchLabeledRuleStatement) {
-                // enhanced switch "case ->" syntax
-                complexity++
-                super.visitSwitchLabeledRuleStatement(statement)
-            }
-
-            override fun visitCatchSection(section: PsiCatchSection) {
-                complexity++
-                super.visitCatchSection(section)
-            }
-
-            override fun visitConditionalExpression(expression: PsiConditionalExpression) {
-                // the ternary operator: condition ? a : b
-                complexity++
-                super.visitConditionalExpression(expression)
-            }
-        })
-
-        return complexity
     }
 }
